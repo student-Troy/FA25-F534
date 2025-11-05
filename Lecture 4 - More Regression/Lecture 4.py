@@ -16,10 +16,108 @@ from sklearn.metrics import mean_squared_error as mse
 
 import os
 
+##########################################################
+# Section 3.1                                            #
+##########################################################
+
 # Assume current working directory is /home/user/project
 print(f"Initial CWD: {os.getcwd()}")
 
-# Change to a subdirectory named 'data'
+# Change to a subdirectory
+os.chdir("Lecture 4 - More Regression")
+print(f"CWD after entering 'data': {os.getcwd()}")
+
+# Reading from a CSV File 
+# Both features and target have already been scaled: mean = 0; SD = 1
+train = pd.read_csv('train.csv') 
+val = pd.read_csv('validate.csv')
+
+# Change back to FA25-F534 directory
+os.chdir("..")
+print(f"CWD after entering 'data': {os.getcwd()}")
+
+# Assume current working directory is /home/user/project
+print(f"Initial CWD: {os.getcwd()}")
+
+# Creating the "X" and "y" variables. We drop Salary from "X"
+X_train, X_val = train.drop('Salary', axis=1), val.drop('Salary', axis=1)
+y_train, y_val = train[['Salary']], val[['Salary']] 
+
+# Importing models
+from sklearn.linear_model import LinearRegression
+
+# Create a model using Linear Regression
+lr=LinearRegression()
+
+# Train the model using the .fit method of scikit-learn
+lr.fit(X_train, y_train)
+
+LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1)
+
+# Create dataFrame with corresponding feature and its respective coefficients
+coeffs = pd.DataFrame(
+    [
+        ['intercept'] + list(X_train.columns),
+        list(lr.intercept_) + list(lr.coef_[0])
+    ]
+).transpose().set_index(0)
+coeffs
+
+##########################################################
+# Section 3.2                                            #
+##########################################################
+
+# Change to a subdirectory
+os.chdir("Lecture 4 - More Regression")
+print(f"CWD after entering 'data': {os.getcwd()}")
+
+# Reading from a CSV File 
+# Both features and target have already been scaled: mean = 0; SD = 1
+data = pd.read_csv('Houseprice_original_data.csv') 
+
+
+# Change back to FA25-F534 directory
+os.chdir("..")
+print(f"CWD after entering 'data': {os.getcwd()}")
+
+# Dealing with larger data
+# .head() and .describe
+
+data.head()
+data.describe()
+
+
+# First 1800 data items are training set; the next 600 are the validation set
+train = data.iloc[:1800] 
+val = data.iloc[1800:2400]
+
+# Creating the "X" and "y" variables. We drop sale price from "X"
+X_train, X_val = train.drop('SalePrice', axis=1), val.drop('SalePrice', axis=1)
+y_train, y_val = train[['SalePrice']], val[['SalePrice']] 
+
+# Importing models
+from sklearn.linear_model import LinearRegression
+
+lr=LinearRegression()
+lr.fit(X_train,y_train)
+
+LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1)
+
+# Create dataFrame with corresponding feature and its respective coefficients
+coeffs = pd.DataFrame(
+    [
+        ['intercept'] + list(X_train.columns),
+        list(lr.intercept_) + list(lr.coef_[0])
+    ]
+).transpose().set_index(0)
+coeffs
+
+
+##########################################################
+# Section 3.1                                            #
+##########################################################
+
+# Change to a subdirectory 
 os.chdir("Lecture 4 - More Regression")
 print(f"CWD after entering 'data': {os.getcwd()}")
 
