@@ -12,7 +12,7 @@ Created on Sun Nov  2 10:19:53 2025
 import pandas as pd # python's data handling package
 import numpy as np # python's scientific computing package
 import matplotlib.pyplot as plt # python's plotting package
-from sklearn.metrics import mean_squared_error as mse
+from sklearn.metrics import mean_squared_error
 
 import os
 
@@ -35,6 +35,7 @@ y_train, y_val = train[['Salary']], val[['Salary']]
 
 # Importing models
 from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 
 # Create a model using Linear Regression
 lr=LinearRegression()
@@ -52,7 +53,9 @@ coeffs = pd.DataFrame(
     ]
 ).transpose().set_index(0)
 coeffs
-
+y_pred = lr.predict(X_val)
+mse = mean_squared_error(y_val, y_pred)
+print(f"Mean Squared Error on validation set: {mse}")
 ##########################################################
 # Section 3.2                                            #
 ##########################################################
@@ -67,7 +70,7 @@ import sys
 import pandas as pd # python's data handling package
 import numpy as np # python's scientific computing package
 import matplotlib.pyplot as plt # python's plotting package
-from sklearn.metrics import mean_squared_error as mse
+from sklearn.metrics import mean_squared_error
 
 # Change to a subdirectory
 os.chdir("Lecture 4 - More Regression")
@@ -85,7 +88,7 @@ data.describe()
 column_data_types = data.dtypes
 column_data_types
 
-# Change to a subdirectory
+# Example of writing out a CSV
 os.chdir("Lecture 4 - More Regression")
 # Writing to a CSV File 
 column_data_types.to_csv('Houseprice_data_types.csv')
@@ -134,7 +137,9 @@ print(df_dummies)
 # Concatenate the dummy variables back to the original DataFrame
 df_encoded = pd.concat([df_new, df_dummies], axis=1)
 
-# Optionally, drop the original categorical column to avoid multicollinearity
+# Best practice, drop the original categorical column
+# to avoid multicollinearity
+
 df_encoded = df_encoded.drop('Neighborhood', axis=1)
 
 column_data_types = df_encoded.dtypes
@@ -166,14 +171,15 @@ column_data_types = df_encoded.dtypes
 column_data_types
 
 
+# Run regression on unscaled data
 
 # First 1800 data items are training set; the next 600 are the validation set
 train = df_encoded.iloc[:1800] 
-val = df_encoded.iloc[1800:2400]
+test = df_encoded.iloc[1800:2400]
 
 # Creating the "X" and "y" variables. We drop sale price from "X"
-X_train, X_val = train.drop('SalePrice', axis=1), val.drop('SalePrice', axis=1)
-y_train, y_val = train[['SalePrice']], val[['SalePrice']] 
+X_train, X_test = train.drop('SalePrice', axis=1), test.drop('SalePrice', axis=1)
+y_train, y_test = train[['SalePrice']], test[['SalePrice']] 
 
 # Importing models
 from sklearn.linear_model import LinearRegression
@@ -192,81 +198,65 @@ coeffs_unscaled = pd.DataFrame(
 ).transpose().set_index(0)
 coeffs_unscaled
 
-### Let's stop here - still working on scaling
+# Calculate MSE on test data
+y_pred = lr.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error on test set: {mse}")
 
-from sklearn.preprocessing import StandardScaler
+# Scaling data
 
-# Create a StandardScaler instance
-scaler = StandardScaler()
-
-# Fit the scaler to the training data
-scaler.fit(X_train)
-
-# Transform both training and validation data
-X_train_scaled = scaler.transform(X_train)
-X_val_scaled = scaler.transform(X_val)
-y_train_scaled = scaler.transform(y_train)
-y_val_scaled = scaler.transform(y_val)
-
-
-print("Original Training Data:\n", X_train)
-print("Scaled Training Data:\n", X_train_scaled)
-print("Original Validation Data:\n", X_val)
-print("Scaled Validation Data:\n", X_val_scaled)
-
-# Importing models
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import TransformedTargetRegressor
+from sklearn.datasets import make_regression
 
-lr=LinearRegression()
-lr.fit(X_train_scaled,y_train_scaled)
-
-LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1)
+# Use TransformedTargetRegressor to scale y
+lr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                transformer=StandardScaler())
+lr.fit(X_train,y_train)
 
 # Create dataFrame with corresponding feature and its respective coefficients
 coeffs_scaled = pd.DataFrame(
     [
-        ['intercept'] + list(X_train_scaled.columns),
-        list(lr.intercept_) + list(lr.coef_[0])
+        ['intercept'] + list(X_train.columns),
+        list(lr.regressor_.intercept_) +
+        list(lr.regressor_.coef_[0])
     ]
 ).transpose().set_index(0)
 coeffs_scaled
-##########################################################
-# Section 3.1                                            #
-##########################################################
 
-# Change to a subdirectory 
+# Calculate MSE
+y_pred = lr.predict(X_test)
+mse = mean_squared_error(y_test, y_pred)
+print(f"Mean Squared Error on test set: {mse}")
+
+## Back on track with Hull's book....
+
+# Ridge Regression
+
+# Clean up
+%reset -f
+%clear
+
+import os
+import pandas as pd # python's data handling package
+import numpy as np # python's scientific computing package
+import matplotlib.pyplot as plt # python's plotting package
+from sklearn.metrics import mean_squared_error as mse
+
+# Assume current working directory is /home/user/project
+# Change to a subdirectory
 os.chdir("Lecture 4 - More Regression")
-print(f"CWD after entering 'data': {os.getcwd()}")
-
 # Reading from a CSV File 
-# Both features and target have already been scaled: mean = 0; SD = 1
 data = pd.read_csv('Houseprice_data_scaled.csv') 
-
-
 # Change back to FA25-F534 directory
 os.chdir("..")
-print(f"CWD after entering 'data': {os.getcwd()}")
+
+# Both features and target have already been scaled: mean = 0; SD = 1
 
 # First 1800 data items are training set; the next 600 are the validation set
 train = data.iloc[:1800] 
 val = data.iloc[1800:2400]
-#####
-column_names = train.columns.tolist()
-column_data_types = train.dtypes
-
-# Change to a subdirectory
-os.chdir("Lecture 4 - More Regression")
-print(f"CWD after entering 'data': {os.getcwd()}")
-
-# Writing to a CSV File 
-# Both features and target have already been scaled: mean = 0; SD = 1
-column_data_types.to_csv('out.csv')
-
-
-# Change back to FA25-F534 directory
-os.chdir("..")
-print(f"CWD after entering 'data': {os.getcwd()}")
-#####
 
 # Creating the "X" and "y" variables. We drop sale price from "X"
 X_train, X_val = train.drop('Sale Price', axis=1), val.drop('Sale Price', axis=1)
@@ -288,3 +278,46 @@ coeffs = pd.DataFrame(
     ]
 ).transpose().set_index(0)
 coeffs
+
+from sklearn.linear_model import Ridge
+# The alpha used by Python's ridge should be the lambda in Hull's book times the number of observations
+alphas=[0.01*1800, 0.02*1800, 0.03*1800, 0.04*1800, 0.05*1800, 0.075*1800,0.1*1800,0.2*1800, 0.4*1800]
+mses=[]
+for alpha in alphas:
+    ridge=Ridge(alpha=alpha)
+    ridge.fit(X_train,y_train)
+    pred=ridge.predict(X_val)
+    mses.append(mse(y_val,pred))
+    print(mse(y_val,pred))
+
+plt.plot(alphas, mses)
+
+# Lasso Regression
+
+# Import Lasso
+from sklearn.linear_model import Lasso
+
+# Here we produce results for alpha=0.05 which corresponds to lambda=0.1 in Hull's book
+lasso = Lasso(alpha=0.05)
+lasso.fit(X_train, y_train)
+# DataFrame with corresponding feature and its respective coefficients
+coeffs = pd.DataFrame(
+    [
+        ['intercept'] + list(X_train.columns),
+        list(lasso.intercept_) + list(lasso.coef_)
+    ]
+).transpose().set_index(0)
+coeffs
+
+# We now consider different lambda values. The alphas are half the lambdas
+alphas=[0.01/2, 0.02/2, 0.03/2, 0.04/2, 0.05/2, 0.075/2, 0.1/2]
+mses=[]
+for alpha in alphas:
+    lasso=Lasso(alpha=alpha)
+    lasso.fit(X_train,y_train)
+    pred=lasso.predict(X_val)
+    mses.append(mse(y_val,pred))
+    print(mse(y_val, pred))
+
+plt.plot(alphas, mses)
+
